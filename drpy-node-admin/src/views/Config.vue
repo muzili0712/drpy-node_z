@@ -72,6 +72,13 @@ const configDescriptions = {
   enable_cat: '启用 CatVod 引擎 (0=禁用, 1=启用, 2=自动)',
   enable_old_config: '启用旧配置格式',
 
+  // House Repository
+  HOUSE_TOKEN: 'DS源仓库认证 Token（JWT，对应 Bearer 后的部分）',
+  HOUSER_URL: 'DS源仓库地址（默认 http://183.87.133.60:5678/）',
+
+  // MCP Auth
+  MCP_TOKEN: 'MCP 远程服务认证 Token（SSE/HTTP 模式下客户端需携带 Authorization: Bearer <此值>）',
+
   // Debug
   show_curl: '显示 cURL 命令',
   show_req: '显示请求详情',
@@ -81,11 +88,13 @@ const configDescriptions = {
 }
 
 const groups = {
-  '云盘配置': ['quark_cookie', 'quark_token_cookie', 'uc_cookie', 'uc_token_cookie', 'ali_token', 'ali_refresh_token', 'pikpak_token', 'cloud_account', 'cloud_password', 'cloud_cookie', 'yun_account', 'yun_cookie', 'pan_passport', 'pan_password', 'pan_auth', 'xun_username', 'xun_password','xun_auth'],
+  '云盘配置': ['quark_cookie', 'quark_token_cookie', 'uc_cookie', 'uc_token_cookie', 'ali_token', 'ali_refresh_token', 'pikpak_token', 'cloud_account', 'cloud_password', 'cloud_cookie', 'yun_account', 'yun_cookie', 'pan_passport', 'pan_password', 'pan_auth', 'xun_username', 'xun_password', 'xun_auth', 'xun_user_id', 'device_id', 'xun_refresh_token'],
   '视频平台': ['bili_cookie', 'baidu_cookie'],
   'AI 服务': ['spark_ai_authKey', 'deepseek_apiKey', 'kimi_apiKey', 'now_ai', 'sparkBotObject'],
   '代理设置': ['enable_system_proxy', 'PROXY_AUTH', 'play_proxy_mode', 'play_local_proxy_type', 'enable_doh', 'allow_forward', 'allow_ftp_cache_clear', 'allow_webdav_cache_clear'],
   '引擎设置': ['enable_dr2', 'enable_py', 'enable_php', 'enable_cat', 'enable_old_config', 'enable_self_jx'],
+  '仓库配置': ['HOUSE_TOKEN', 'HOUSER_URL'],
+  'MCP 认证': ['MCP_TOKEN'],
   '其他设置': ['thread', 'api_pwd', 'link_url', 'enable_link_data', 'enable_link_push', 'enable_link_jar', 'mg_hz', 'show_curl', 'show_req', 'enable_rule_name', 'hide_adult', 'cat_sub_code', 'must_sub_code']
 }
 

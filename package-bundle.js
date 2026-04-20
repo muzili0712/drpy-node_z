@@ -5,6 +5,7 @@ import url from 'url';
 
 // 要打包的文件/目录列表 (相对于 drpy-node-bundle 目录)
 const INCLUDE_ITEMS = [
+    '.env',
     'libs',
     'spider',
     'jx',

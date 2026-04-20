@@ -25,7 +25,7 @@ export default defineConfig({
     file: 'libs/localDsCore.bundled.js',
     format: 'esm',
     sourcemap: false,
-    inlineDynamicImports: true,
+    codeSplitting: false,
     banner: `
 import { createRequire as _createRequire } from 'module';
 import { fileURLToPath as _fileURLToPath } from 'url';
@@ -48,6 +48,10 @@ const require = (moduleName) => {
       'puppeteer': path.resolve(__dirname, 'puppeteer-mock.js'),
       [path.resolve(__dirname, '../libs_drpy/jsonpathplus.min.js')]: path.resolve(__dirname, 'shim/jsonpath-shim.js')
     }
+  },
+  onwarn: (warning, defaultHandler) => {
+    if (warning.code === 'EVAL') return;
+    defaultHandler(warning);
   },
   external: (id) => {
     // Check if it's a built-in module

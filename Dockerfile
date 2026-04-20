@@ -3,16 +3,13 @@
 FROM node:20-alpine AS builder
 
 # 安装git
-RUN apk add --no-cache git make python3 py3-pip build-base
-
-# 如果您需要配置git以使用特定的HTTP版本，请确保这是出于必要和安全考虑
-RUN git config --global http.version HTTP/1.1
+RUN apk add --no-cache make python3 py3-pip build-base
 
 # 创建一个工作目录
 WORKDIR /app
 
 # 克隆GitHub仓库到工作目录
-RUN git clone https://github.com/hjdhnx/drpy-node.git .
+COPY . /app
 RUN sed -i 's|const shell = os.platform() === '"'"'win32'"'"' ? '"'"'powershell.exe'"'"' : '"'"'bash'"'"'|const shell = os.platform() === '"'"'win32'"'"' ? '"'"'powershell.exe'"'"' : '"'"'sh'"'"'|' controllers/admin/terminalController.js
 RUN rm -rf drpy-node-admin drpy-node-bundle drpy-node-mcp drpy2-quickjs
 

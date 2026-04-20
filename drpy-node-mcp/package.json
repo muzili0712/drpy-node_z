@@ -1,6 +1,6 @@
 {
   "name": "drpy-node-mcp",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "MCP server for drpy-node",
   "main": "index.js",
   "type": "module",
@@ -17,13 +17,16 @@
     "sync-version": "node scripts/sync-version.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@modelcontextprotocol/sdk": "^1.0.1",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "cheerio": "^1.2.0",
+    "fastify": "^5.8.4",
     "fs-extra": "^11.2.0",
     "node-sqlite3-wasm": "^0.8.53",
     "zod": "^3.23.8",

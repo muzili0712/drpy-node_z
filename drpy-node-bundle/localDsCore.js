@@ -6,6 +6,10 @@ import {startJsonWatcher, getApiEngine} from "../utils/api_helper.js";
 import * as drpyS from '../libs/drpyS.js';
 import php from '../libs/php.js';
 import catvod from '../libs/catvod.js';
+import dotenv from 'dotenv';
+import '../utils/esm-register.mjs'; // 确保在这里引入以便能够被打包进 bundle
+
+export { load } from '../utils/esm-register.mjs';
 
 // 初始化API引擎集合
 const ENGINES = {
@@ -19,14 +23,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Determine if we are running from the dist/libs directory (bundled) or source
 const isBundled = __dirname.endsWith('dist') || __dirname.endsWith('libs') || __dirname.endsWith('dist' + path.sep) || __dirname.endsWith('libs' + path.sep);
 
-// Smart root directory detection
 const possibleRoots = [
     __dirname,
     path.resolve(__dirname, '..'),
     path.resolve(__dirname, '../..'),
     path.resolve(__dirname, '../../..')
 ];
-const rootDir = possibleRoots.find(d => existsSync(path.join(d, 'spider/js'))) || (isBundled ? path.resolve(__dirname, '../..') : path.resolve(__dirname, '..'));
+const rootDir = possibleRoots.find(d => existsSync(path.join(d, 'spider/js'))) || path.resolve(__dirname, '..');
+
+// 尝试加载 .env 文件注入到 process.env
+const envPathsToTry = [
+    path.join(process.cwd(), '.env'),
+    path.join(rootDir, '.env'),
+    path.join(rootDir, '../.env')
+];
+
+for (const envPath of envPathsToTry) {
+    if (existsSync(envPath)) {
+        dotenv.config({ path: envPath });
+        break;
+    }
+}
 
 // 定义options的目录
 const jxDir = path.join(rootDir, 'jx');
@@ -92,11 +109,27 @@ function withTimeout(promise, timeoutMs = null, operation = 'API操作', invokeM
     ]);
 }
 
+function buildOptions(customRootDir) {
+    const _rootDir = customRootDir || rootDir;
+    return {
+        rootDir: _rootDir,
+        jxDir: path.join(_rootDir, 'jx'),
+        publicDir: path.join(_rootDir, 'public'),
+        jsonDir: path.join(_rootDir, 'json'),
+        jsDir: path.join(_rootDir, 'spider/js'),
+        dr2Dir: path.join(_rootDir, 'spider/js_dr2'),
+        phpDir: path.join(_rootDir, 'spider/php'),
+        catDir: path.join(_rootDir, 'spider/catvod'),
+        catLibDir: path.join(_rootDir, 'spider/catLib'),
+    };
+}
+
 async function getEngine(moduleName, query, inject_env) {
     // 壳子可以注入环境变量，内部自行构造env
     inject_env = inject_env || {};
+    const effectiveOptions = inject_env.rootDir ? buildOptions(inject_env.rootDir) : options;
     // 获取API引擎和模块路径
-    let {apiEngine, moduleDir, _ext, modulePath} = getApiEngine(ENGINES, moduleName, query, options);
+    let {apiEngine, moduleDir, _ext, modulePath} = getApiEngine(ENGINES, moduleName, query, effectiveOptions);
 
     // 检查模块文件是否存在
     if (!existsSync(modulePath)) {
@@ -318,7 +351,7 @@ async function getEngine(moduleName, query, inject_env) {
         let t1 = (new Date()).getTime(); // 记录开始时间
         // 构建解析器文件路径
         const jxName = query.parse;
-        const jxPath = path.join(options.jxDir, `${jxName}.js`);
+        const jxPath = path.join(effectiveOptions.jxDir, `${jxName}.js`);
         const backResp = await withTimeout(
             drpyS.jx(jxPath, env, query),
             null,

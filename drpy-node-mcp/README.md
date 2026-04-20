@@ -11,10 +11,16 @@
   - [安装与运行](#安装与运行)
     - [1. 安装依赖](#1-安装依赖)
     - [2. 运行服务](#2-运行服务)
-  - [客户端配置 (Trae/Claude Desktop)](#客户端配置-traeclaude-desktop)
+  - [客户端配置与部署指南](#客户端配置与部署指南)
+    - [支持的环境变量](#支持的环境变量)
+    - [1. Stdio 模式配置 (本地客户端推荐)](#1-stdio-模式配置-本地客户端推荐)
+    - [2. SSE / HTTP Stream 模式配置 (远程或分布式部署)](#2-sse--http-stream-模式配置-远程或分布式部署)
   - [可用工具 (Tools)](#可用工具-tools)
     - [文件系统操作](#文件系统操作)
     - [爬虫开发与调试 (New)](#爬虫开发与调试-new)
+  - [运行模式与部署](#运行模式与部署)
+    - [1. 手动运行](#1-手动运行)
+    - [2. Docker 部署](#2-docker-部署)
     - [系统维护与监控 (New)](#系统维护与监控-new)
   - [AI 交互示例 (Best Practice)](#ai-交互示例-best-practice)
 
@@ -33,17 +39,31 @@ npm install
 
 ### 2. 运行服务
 
-该服务使用 Stdio 传输协议，通常由支持 MCP 的客户端（如 Claude Desktop、Cursor、VS Code 插件等）自动启动。
+该服务支持 `stdio` 和 `sse`/`http` 多种传输协议。通常由支持 MCP 的客户端（如 Trae、Claude Desktop、Cursor 等）自动启动或连接。
 
 如果需要手动调试运行：
 
 ```bash
+# 默认使用 stdio 模式
 node index.js
+
+# 使用 sse 模式
+node index.js sse
 ```
 
-## 客户端配置 (Trae/Claude Desktop)
+## 客户端配置与部署指南
 
-要将此 MCP 服务添加到 Trae 或其他支持 MCP 的客户端，请在客户端的 MCP 配置文件（通常是 `config.json`）中添加以下内容：
+本 MCP 服务支持多种运行模式和环境配置，以适应不同的客户端和部署环境。
+
+### 支持的环境变量
+
+*   **`MCP_MODE`**: 运行模式。可选值：`stdio` (默认), `sse`, `http`。
+*   **`PORT`**: HTTP/SSE 模式下的监听端口（默认 `57579`，与 drpy-node 的 5757 对应）。
+*   **`ROOT`**: 指定 `drpy-node` 主项目的绝对路径。MCP 工具需要访问项目文件，默认情况下它会查找 `drpy-node-mcp` 的父级目录。如果 MCP 服务与主项目不在同一级目录下（比如 Docker 部署时），**必须配置此环境变量**，否则文件读写和工具调用将失效。
+
+### 1. Stdio 模式配置 (本地客户端推荐)
+
+`stdio` 是最常用的本地进程通信模式。在 Trae 或 Claude Desktop 的 MCP 配置文件（通常是 `config.json` 或 `claude_desktop_config.json`）中添加：
 
 ```json
 {
@@ -51,14 +71,48 @@ node index.js
     "drpy-node-mcp": {
       "command": "node",
       "args": [
-        "E:/gitwork/drpy-node/drpy-node-mcp/index.js"
-      ]
+        "E:/gitwork/drpy-node/drpy-node-mcp/index.js",
+        "stdio"
+      ],
+      "env": {
+        "ROOT": "E:/gitwork/drpy-node"
+      }
     }
   }
 }
 ```
 
-> **注意**: 请确保 `args` 中的路径是您本地机器上 `index.js` 的绝对路径。
+> **注意**: 
+> 1. `args` 中的路径必须是你本地机器上 `index.js` 的绝对路径。
+> 2. `env.ROOT` 可以显式指定 `drpy-node` 的根目录，确保文件路径解析绝对安全。
+
+### 2. SSE / HTTP Stream 模式配置 (远程或分布式部署)
+
+如果你将 MCP 服务部署在 Docker、远程服务器或 WSL 中，可以通过 SSE 模式让客户端进行网络连接。
+
+**启动服务端**:
+```bash
+# 假设 drpy-node 主项目挂载在 /project
+export ROOT=/project
+export PORT=57579
+export MCP_MODE=sse
+node index.js
+```
+
+**客户端配置**:
+如果你的客户端（如 Cursor、cline 等）支持配置 SSE Endpoint：
+
+```json
+{
+  "mcpServers": {
+    "drpy-node-mcp-remote": {
+      "type": "sse",
+      "url": "http://你的服务器IP:57579/sse"
+    }
+  }
+}
+```
+> **提示**: `http` 模式等价于 `sse`，都会启动 Fastify Web 服务器并暴露 `/sse`（用于建立流）和 `/message`（用于 POST 请求）。
 
 ## 可用工具 (Tools)
 
@@ -98,6 +152,40 @@ node index.js
     *   描述: 使用 drpy-node 的请求库 (`req`) 抓取 URL。
     *   参数: `url` (必填), `options` (可选: method, headers, data)
     *   用途: 调试目标网站的连通性、反爬策略（如 Headers 校验）。
+
+*   **`analyze_website_structure`** (Automated DS Generation)
+    *   描述: 抓取目标网站并清洗 HTML (移除 script, style, meta 等)，提取简化版 DOM 树。
+    *   用途: 极大地减少 Token 消耗，使 AI 能够直接分析出准确的 CSS 选择器。
+
+*   **`get_claw_ds_skill`** (Automated DS Generation)
+    *   描述: 获取基于 `claw-ds` 的自动化写源技能 Prompt 和标准 DS 源模板。
+    *   用途: 提供给 AI 明确的工作流和代码框架，只需喂入网址即可生成源码。
+
+## 运行模式与部署
+
+本服务支持三种传输模式：`stdio` (标准输入输出，默认), `sse` / `http` (HTTP Stream)。
+
+### 1. 手动运行
+
+*   **Stdio 模式** (适用于 Trae / Claude Desktop 等本地客户端):
+    ```bash
+    node index.js stdio
+    ```
+*   **SSE/HTTP 模式** (适用于远程调用或网络集成):
+    ```bash
+    PORT=3001 MCP_MODE=sse node index.js
+    ```
+    > 客户端可以通过 `http://localhost:3001/sse` 建立连接。
+
+### 2. Docker 部署
+
+项目根目录下提供了 `Dockerfile` 和 `docker-compose.yml`，方便一键部署为独立服务：
+
+```bash
+cd drpy-node-mcp
+docker-compose up -d
+```
+> **注意**: Docker 默认通过 `ROOT=/project` 环境变量将父级目录 (drpy-node) 映射到容器内，保证文件读写操作正常生效。
 
 *   **`debug_spider_rule`**
     *   描述: 使用 drpy 的解析规则（pdfa/pdfh/pd）解析 HTML 或 URL 内容。

@@ -2,7 +2,7 @@
   "dxt_version": "0.1",
   "name": "drpy-node-mcp",
   "display_name": "Drpy Node MCP",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "MCP server for drpy-node: spider development, debugging, and file management tools",
   "long_description": "A comprehensive MCP server for drpy-node development. Provides tools for spider source management, rule debugging, file operations, database queries, and system configuration. Supports parsing HTML with drpy rules, validating spider syntax, and managing the drpy-node service.",
   "homepage": "https://github.com/hjdhnx/drpy-node/tree/main/drpy-node-mcp",
@@ -115,7 +115,7 @@
       "linux"
     ],
     "runtimes": {
-      "node": ">=18.0.0"
+      "node": ">=22.0.0"
     }
   }
 }

@@ -1,6 +1,29 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
+import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function copyAssetsPlugin() {
+  return {
+    name: 'copy-assets',
+    writeBundle() {
+      const assets = ['skills.md', 'skills-zh.md'];
+      const outDir = join(__dirname, 'dist');
+      if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
+      for (const file of assets) {
+        const src = join(__dirname, file);
+        if (existsSync(src)) {
+          copyFileSync(src, join(outDir, file));
+          console.log(`Copied ${file} -> dist/${file}`);
+        }
+      }
+    }
+  };
+}
 
 export default {
   input: 'index.js',
@@ -17,6 +40,7 @@ export default {
     }),
     commonjs(),
     json(),
+    copyAssetsPlugin(),
   ],
   external: [
     // Node.js built-ins
